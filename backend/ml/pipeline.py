@@ -281,11 +281,19 @@ def run_forensic_pipeline(raw_txs: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Insert Transactions
     for _, row in df.iterrows():
         cursor.execute("""
-        INSERT OR REPLACE INTO transactions (
+        INSERT INTO transactions (
             txid, wallet_from, wallet_to, amount, timestamp, ip, port,
             anomaly_score, risk_score, risk_level, risk_factors, cluster_id,
             graph_degree, betweenness, is_peel_chain, typology
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (txid) DO UPDATE SET
+            wallet_from = EXCLUDED.wallet_from, wallet_to = EXCLUDED.wallet_to,
+            amount = EXCLUDED.amount, timestamp = EXCLUDED.timestamp, ip = EXCLUDED.ip,
+            port = EXCLUDED.port, anomaly_score = EXCLUDED.anomaly_score,
+            risk_score = EXCLUDED.risk_score, risk_level = EXCLUDED.risk_level,
+            risk_factors = EXCLUDED.risk_factors, cluster_id = EXCLUDED.cluster_id,
+            graph_degree = EXCLUDED.graph_degree, betweenness = EXCLUDED.betweenness,
+            is_peel_chain = EXCLUDED.is_peel_chain, typology = EXCLUDED.typology
         """, (
             row["txid"], row["wallet_from"], row["wallet_to"], float(row["amount"]),
             row["timestamp"], row["ip"], int(row["port"]),
@@ -326,10 +334,16 @@ def run_forensic_pipeline(raw_txs: List[Dict[str, Any]]) -> Dict[str, Any]:
         }
         
         cursor.execute("""
-        INSERT OR REPLACE INTO wallets (
+        INSERT INTO wallets (
             address, total_sent, total_received, tx_count, velocity,
             unique_ips, counterparties_count, risk_score, risk_level, risk_factors
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (address) DO UPDATE SET
+            total_sent = EXCLUDED.total_sent, total_received = EXCLUDED.total_received,
+            tx_count = EXCLUDED.tx_count, velocity = EXCLUDED.velocity,
+            unique_ips = EXCLUDED.unique_ips, counterparties_count = EXCLUDED.counterparties_count,
+            risk_score = EXCLUDED.risk_score, risk_level = EXCLUDED.risk_level,
+            risk_factors = EXCLUDED.risk_factors
         """, (
             addr, tot_sent, tot_recv, tx_count, round(tx_count / 48.0, 2), # tx per hour over 48h
             len(ips), len(counterparties), wallet_risk, w_level, json.dumps(w_factors)
@@ -341,8 +355,11 @@ def run_forensic_pipeline(raw_txs: List[Dict[str, Any]]) -> Dict[str, Any]:
             ip_tx_count = len(df[((df["wallet_from"] == addr) | (df["wallet_to"] == addr)) & (df["ip"] == ip)])
             confidence = round(min(96.0, 50.0 + (ip_tx_count * 12.0) + (10.0 if len(ips) == 1 else -5.0)), 1)
             cursor.execute("""
-            INSERT OR REPLACE INTO wallet_ips (wallet, ip, tx_count, last_seen, correlation_confidence)
+            INSERT INTO wallet_ips (wallet, ip, tx_count, last_seen, correlation_confidence)
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT (wallet, ip) DO UPDATE SET
+                tx_count = EXCLUDED.tx_count, last_seen = EXCLUDED.last_seen,
+                correlation_confidence = EXCLUDED.correlation_confidence
             """, (addr, ip, ip_tx_count, datetime.utcnow().isoformat() + "Z", confidence))
             
     # Generate Intelligence Leads from high-risk entities & patterns

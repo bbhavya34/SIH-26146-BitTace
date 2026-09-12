@@ -31,7 +31,7 @@ BitTrace is a **fully offline** forensic intelligence platform designed for anal
 | Backend API | FastAPI + Python 3.10+ |
 | ML Engine | scikit-learn (Isolation Forest, DBSCAN) |
 | Graph Analytics | NetworkX (directed graph, centrality) |
-| Storage | SQLite (`bittrace.db`) — offline, no cloud |
+| Storage | PostgreSQL — persistent relational storage |
 | Report Generation | ReportLab (PDF dossiers) |
 | Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
 | Data Visualisation | Recharts |
@@ -76,7 +76,7 @@ graph TB
         S7["Stage 7: DB Persist and Lead Gen"]
     end
 
-    subgraph DB["SQLite — bittrace.db"]
+    subgraph DB["PostgreSQL"]
         T_TX["transactions"]
         T_WAL["wallets"]
         T_IPS["wallet_ips"]
@@ -106,7 +106,7 @@ flowchart LR
     NX["NetworkX\nGraph Construction\n- Degree centrality\n- Betweenness centrality\n- Peel chain detection"]
     DBSCAN_N["DBSCAN\nBehavioural Clustering\neps=0.75, min_samples=3"]
     RISK["Weighted Risk Fusion\n30% anomaly score\n25% burst score\n20% structuring score\n15% peel chain flag\n10% graph centrality"]
-    STORE["SQLite Storage\n- transactions\n- wallets\n- wallet_ips\n- leads\n- cases"]
+    STORE["PostgreSQL Storage\n- transactions\n- wallets\n- wallet_ips\n- leads\n- cases"]
     LEADS["Intelligence Lead\nGeneration\n- Peel Chain rule\n- Fan-In Structuring rule\n- Rapid Burst rule\n- IF Anomaly rule"]
     UI["Frontend Dashboard\n- Risk distribution\n- Typology heatmap\n- Network graph\n- Case management"]
 
@@ -365,7 +365,7 @@ sequenceDiagram
     participant Frontend
     participant API
     participant ML as ML Pipeline
-    participant DB as SQLite DB
+    participant DB as PostgreSQL DB
 
     Analyst->>Frontend: Upload CSV/JSON or trigger Demo
     Frontend->>API: POST /upload or POST /generate-demo-data
@@ -417,8 +417,13 @@ sequenceDiagram
 ```bash
 cd backend
 pip install -r requirements.txt
+$env:DATABASE_URL="postgresql://user:password@localhost:5432/bittrace"
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+The backend requires `DATABASE_URL`, a PostgreSQL connection string. On Render, set
+`DATABASE_URL` to the internal URL from the attached PostgreSQL database and set
+`ALLOWED_ORIGINS` to the deployed frontend URL.
 
 API docs available at: `http://127.0.0.1:8000/docs`
 
@@ -431,6 +436,24 @@ npm run dev
 ```
 
 App available at: `http://localhost:5173`
+
+### Production deployment
+
+The repository includes `render.yaml` for deploying the FastAPI service and a
+managed PostgreSQL database on Render. Set `ALLOWED_ORIGINS` to the final
+frontend origin in the Render dashboard.
+
+Deploy the `frontend` directory to Vercel with:
+
+```text
+Root Directory: frontend
+Build Command: npm run build
+Output Directory: dist
+Environment: VITE_API_BASE_URL=https://your-api.onrender.com
+```
+
+After the frontend is deployed, copy its URL into the backend's
+`ALLOWED_ORIGINS` value and redeploy the API.
 
 ### Input Schema
 
@@ -457,4 +480,4 @@ Upload CSV or JSON files with the following fields (aliases are auto-mapped):
 
 ---
 
-> Built for **NTRO PS-26146** | SIH 2026 | All analysis runs fully **offline** on local SQLite storage.
+> Built for **NTRO PS-26146** | SIH 2026 | Analysis runs on persistent PostgreSQL storage.

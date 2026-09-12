@@ -1,18 +1,60 @@
-"""
-BitTrace Database Layer - SQLite Storage for Forensic Data
-"""
-import sqlite3
-import json
+"""PostgreSQL database layer for BitTrace forensic data."""
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+import psycopg
+from psycopg.rows import dict_row
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "bittrace.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+class DatabaseCursor:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    @staticmethod
+    def _adapt_query(query: str) -> str:
+        return query.replace("?", "%s")
+
+    def execute(self, query, params=None):
+        self._cursor.execute(self._adapt_query(query), params or ())
+        return self
+
+    def executemany(self, query, params):
+        self._cursor.executemany(self._adapt_query(query), params)
+        return self
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+
+class DatabaseConnection:
+    def __init__(self, connection):
+        self._connection = connection
+
+    def cursor(self):
+        return DatabaseCursor(self._connection.cursor())
+
+    def execute(self, query, params=None):
+        return self.cursor().execute(query, params)
+
+    def commit(self):
+        self._connection.commit()
+
+    def rollback(self):
+        self._connection.rollback()
+
+    def close(self):
+        self._connection.close()
+
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL must be set to a PostgreSQL connection string")
+    return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
 
 def init_db():
     conn = get_db_connection()
@@ -56,7 +98,7 @@ def init_db():
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS wallet_ips (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         wallet TEXT NOT NULL,
         ip TEXT NOT NULL,
         tx_count INTEGER DEFAULT 1,
@@ -139,7 +181,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS source_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         dataset_id TEXT NOT NULL,
         source_row_number INTEGER NOT NULL,
         raw_payload TEXT NOT NULL,
@@ -154,7 +196,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS risk_scores (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         score REAL NOT NULL,
@@ -171,7 +213,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rule_hits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         rule_code TEXT NOT NULL,
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
@@ -186,7 +228,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS audit_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         actor_id TEXT,
         action TEXT NOT NULL,
         entity_type TEXT,
@@ -203,8 +245,8 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_events_entity ON audit_events(entity_type, entity_id)")
     
     # Initialize pipeline state if not present
-    cursor.execute("SELECT COUNT(*) FROM pipeline_state WHERE id = 1")
-    if cursor.fetchone()[0] == 0:
+    cursor.execute("SELECT COUNT(*) AS count FROM pipeline_state WHERE id = 1")
+    if cursor.fetchone()["count"] == 0:
         cursor.execute("""
         INSERT INTO pipeline_state (id, current_stage, progress_pct, is_running, message, updated_at)
         VALUES (1, 'IDLE', 0, 0, 'System ready for data ingestion', ?)

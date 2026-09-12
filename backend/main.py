@@ -71,7 +71,7 @@ def on_startup():
     init_db()
     # Check if empty, generate initial baseline demo dataset
     conn = get_db_connection()
-    count = conn.cursor().execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
+    count = conn.cursor().execute("SELECT COUNT(*) AS count FROM transactions").fetchone()["count"]
     conn.close()
     if count == 0:
         demo_txs = generate_synthetic_transactions(120)
@@ -231,21 +231,21 @@ def get_dashboard_stats():
     conn = get_db_connection()
     c = conn.cursor()
     
-    total_tx = c.execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
-    total_vol = c.execute("SELECT SUM(amount) FROM transactions").fetchone()[0] or 0.0
-    critical_tx = c.execute("SELECT COUNT(*) FROM transactions WHERE risk_level = 'CRITICAL'").fetchone()[0]
-    high_tx = c.execute("SELECT COUNT(*) FROM transactions WHERE risk_level = 'HIGH'").fetchone()[0]
-    total_wallets = c.execute("SELECT COUNT(*) FROM wallets").fetchone()[0]
-    flagged_wallets = c.execute("SELECT COUNT(*) FROM wallets WHERE risk_level IN ('CRITICAL', 'HIGH')").fetchone()[0]
-    total_leads = c.execute("SELECT COUNT(*) FROM leads WHERE status = 'ACTIVE'").fetchone()[0]
-    total_cases = c.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
+    total_tx = c.execute("SELECT COUNT(*) AS count FROM transactions").fetchone()["count"]
+    total_vol = c.execute("SELECT SUM(amount) AS total FROM transactions").fetchone()["total"] or 0.0
+    critical_tx = c.execute("SELECT COUNT(*) AS count FROM transactions WHERE risk_level = 'CRITICAL'").fetchone()["count"]
+    high_tx = c.execute("SELECT COUNT(*) AS count FROM transactions WHERE risk_level = 'HIGH'").fetchone()["count"]
+    total_wallets = c.execute("SELECT COUNT(*) AS count FROM wallets").fetchone()["count"]
+    flagged_wallets = c.execute("SELECT COUNT(*) AS count FROM wallets WHERE risk_level IN ('CRITICAL', 'HIGH')").fetchone()["count"]
+    total_leads = c.execute("SELECT COUNT(*) AS count FROM leads WHERE status = 'ACTIVE'").fetchone()["count"]
+    total_cases = c.execute("SELECT COUNT(*) AS count FROM cases").fetchone()["count"]
     
     # Risk distribution
     risk_dist = {
         "CRITICAL": critical_tx,
         "HIGH": high_tx,
-        "MEDIUM": c.execute("SELECT COUNT(*) FROM transactions WHERE risk_level = 'MEDIUM'").fetchone()[0],
-        "LOW": c.execute("SELECT COUNT(*) FROM transactions WHERE risk_level = 'LOW'").fetchone()[0]
+        "MEDIUM": c.execute("SELECT COUNT(*) AS count FROM transactions WHERE risk_level = 'MEDIUM'").fetchone()["count"],
+        "LOW": c.execute("SELECT COUNT(*) AS count FROM transactions WHERE risk_level = 'LOW'").fetchone()["count"]
     }
     
     # Typology distribution
@@ -314,8 +314,8 @@ def list_transactions(
         params.extend([search_term, search_term, search_term, search_term])
         
     # Count total
-    count_query = query.replace("SELECT *", "SELECT COUNT(*)")
-    total = c.execute(count_query, params).fetchone()[0]
+    count_query = query.replace("SELECT *", "SELECT COUNT(*) AS count")
+    total = c.execute(count_query, params).fetchone()["count"]
     
     # Sort & pagination
     allowed_sorts = {"timestamp", "amount", "risk_score", "anomaly_score"}
@@ -429,7 +429,7 @@ def list_wallets(
         query += " AND address LIKE ? ESCAPE '!'"
         params.append(f"%{escape_like(search.strip())}%")
         
-    total = c.execute(query.replace("SELECT *", "SELECT COUNT(*)"), params).fetchone()[0]
+    total = c.execute(query.replace("SELECT *", "SELECT COUNT(*) AS count"), params).fetchone()["count"]
     
     query += " ORDER BY risk_score DESC, total_sent + total_received DESC LIMIT ? OFFSET ?"
     params.extend([limit, (page - 1) * limit])
