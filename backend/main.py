@@ -7,6 +7,7 @@ import csv
 import json
 import uuid
 import hashlib
+import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Literal
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Response, Path
@@ -45,10 +46,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for frontend development
+# Enable CORS for local development and the deployed frontend origin.
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

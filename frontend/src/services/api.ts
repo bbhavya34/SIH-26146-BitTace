@@ -1,6 +1,6 @@
 import { Transaction, Wallet, Lead, Case, DashboardStats, PipelineState, GraphData } from '../types';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export async function fetchStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_BASE}/stats`);
