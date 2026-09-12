@@ -4,6 +4,7 @@ import { SubSidebar } from './components/layout/SubSidebar';
 import { QuickViewDrawer } from './components/layout/QuickViewDrawer';
 import { GlobalSearchDialog } from './components/common/GlobalSearchDialog';
 import { CreateCaseDialog } from './components/common/CreateCaseDialog';
+import { StartupIntro } from './components/common/StartupIntro';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { IngestionPage } from './pages/IngestionPage';
@@ -27,6 +28,8 @@ import {
 import { DashboardStats, PipelineState, Lead, Case, NavigationPage } from './types';
 
 export function App() {
+  const [showStartupIntro, setShowStartupIntro] = useState(true);
+  const [isIntroRevealing, setIsIntroRevealing] = useState(false);
   const [currentPage, setCurrentPage] = useState<NavigationPage | 'not_found'>('dashboard');
   const [subSidebarCollapsed, setSubSidebarCollapsed] = useState(false);
 
@@ -127,7 +130,14 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-soc-950 text-soc-200 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <>
+      {showStartupIntro && (
+        <StartupIntro
+          onReveal={() => setIsIntroRevealing(true)}
+          onComplete={() => setShowStartupIntro(false)}
+        />
+      )}
+      <div className={`bittrace-shell${isIntroRevealing ? ' is-revealing' : ''} min-h-screen bg-soc-950 text-soc-200 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200`}>
       {/* Shortened Floating Pill Navbar */}
       <Navbar
         currentPage={currentPage}
@@ -136,7 +146,7 @@ export function App() {
       />
 
       {/* Main Workspace Layout with Clean Sub-topic Sidebar */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-16 flex gap-6">
+      <div className="bittrace-workspace flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-16 flex gap-6">
         {/* Sleek Sub-Sidebar for sub-related topics */}
         <SubSidebar
           currentPage={currentPage}
@@ -150,7 +160,7 @@ export function App() {
         />
 
         {/* Content View */}
-        <main className="flex-1 min-w-0">
+        <main className="bittrace-main flex-1 min-w-0">
           {currentPage === 'dashboard' && (
             <DashboardPage
               stats={stats}
@@ -244,7 +254,8 @@ export function App() {
           setCurrentPage('cases');
         }}
       />
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Database, Menu, Search, ShieldCheck, X } from 'lucide-react';
 import { NavigationPage } from '../../types';
 
 interface NavbarProps {
@@ -30,9 +30,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         onClick={() => onSelectPage('dashboard')}
         className="cursor-pointer flex items-center flex-shrink-0 group py-1"
       >
-        <span className="font-extrabold text-white text-lg tracking-wider font-sans group-hover:text-cyan-400 transition-colors">
-          BitTrace
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cyan-400/30 bg-cyan-400/10 text-cyan-300">
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div>
+            <span className="block font-bold text-white text-lg tracking-tight font-sans group-hover:text-cyan-300 transition-colors">
+              BitTrace
+            </span>
+            <span className="hidden sm:block text-[9px] font-mono uppercase tracking-[0.18em] text-soc-500">
+              Evidence workbench
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Floating Pill Navbar */}
@@ -62,6 +72,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Center */}
         <div className="hidden sm:flex items-center gap-3 md:ml-6">
+          <div className="hidden lg:flex items-center gap-2 border-r border-slate-700/80 pr-4 text-[10px] font-mono uppercase tracking-wider text-soc-400">
+            <Database className="h-3.5 w-3.5 text-cyan-400" />
+            <span>Demo dataset</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="text-emerald-400">Local</span>
+          </div>
           {/* Search Pill */}
           <button
             onClick={onOpenSearch}
@@ -81,17 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="md:hidden text-soc-300 hover:text-white p-1"
           aria-label="Toggle navigation menu"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
         {/* Mobile Dropdown Menu */}

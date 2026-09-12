@@ -105,6 +105,102 @@ def init_db():
         updated_at TEXT NOT NULL
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS datasets (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL,
+        source_format TEXT NOT NULL,
+        file_sha256 TEXT,
+        row_count INTEGER DEFAULT 0,
+        accepted_count INTEGER DEFAULT 0,
+        rejected_count INTEGER DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'UPLOADED',
+        schema_mapping TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ingestion_jobs (
+        id TEXT PRIMARY KEY,
+        dataset_id TEXT NOT NULL,
+        pipeline_version TEXT NOT NULL,
+        current_stage TEXT NOT NULL,
+        progress_pct INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'PENDING',
+        error_message TEXT,
+        started_at TEXT,
+        completed_at TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (dataset_id) REFERENCES datasets(id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS source_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dataset_id TEXT NOT NULL,
+        source_row_number INTEGER NOT NULL,
+        raw_payload TEXT NOT NULL,
+        normalized_payload TEXT,
+        validation_status TEXT NOT NULL DEFAULT 'PENDING',
+        rejection_reason TEXT,
+        created_at TEXT NOT NULL,
+        UNIQUE(dataset_id, source_row_number),
+        FOREIGN KEY (dataset_id) REFERENCES datasets(id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS risk_scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        score REAL NOT NULL,
+        risk_band TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        components TEXT NOT NULL DEFAULT '{}',
+        reasons TEXT NOT NULL DEFAULT '[]',
+        model_version TEXT NOT NULL,
+        rule_version TEXT NOT NULL,
+        configuration_version TEXT NOT NULL,
+        calculated_at TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS rule_hits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rule_code TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        severity TEXT NOT NULL,
+        explanation TEXT NOT NULL,
+        threshold_config TEXT NOT NULL DEFAULT '{}',
+        evidence_ids TEXT NOT NULL DEFAULT '[]',
+        rule_version TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS audit_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor_id TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT,
+        entity_id TEXT,
+        details TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_dataset ON ingestion_jobs(dataset_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_source_records_dataset ON source_records(dataset_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_risk_scores_entity ON risk_scores(entity_type, entity_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_rule_hits_entity ON rule_hits(entity_type, entity_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_events_entity ON audit_events(entity_type, entity_id)")
     
     # Initialize pipeline state if not present
     cursor.execute("SELECT COUNT(*) FROM pipeline_state WHERE id = 1")

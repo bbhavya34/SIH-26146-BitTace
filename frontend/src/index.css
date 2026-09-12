@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,10 +7,19 @@
 @layer base {
   :root {
     color-scheme: dark;
+    --canvas: #080b10;
+    --surface: #10151c;
+    --surface-raised: #151c25;
+    --line: #26313c;
+    --muted: #8795a5;
+    --ink: #edf3f7;
+    --signal: #44d7c0;
+    --signal-soft: rgba(68, 215, 192, 0.12);
+    --warning: #f2b84b;
   }
   
   html {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -18,13 +27,18 @@
   }
 
   body {
-    @apply bg-soc-950 text-soc-200 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200;
+    @apply text-soc-200 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200;
+    background-color: var(--canvas);
+    background-image: linear-gradient(rgba(68, 215, 192, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(68, 215, 192, 0.025) 1px, transparent 1px),
+      radial-gradient(circle at 80% -10%, rgba(68, 215, 192, 0.09), transparent 34rem);
+    background-size: 32px 32px, 32px 32px, auto;
     overflow-x: hidden;
   }
 
   /* Monospace forensic data elements */
   .font-mono {
-    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-feature-settings: 'zero', 'calt';
     letter-spacing: -0.01em;
   }
@@ -73,8 +87,119 @@
 /* Surface Cards */
 .soc-card {
   @apply bg-soc-900 border border-soc-800/80 rounded-lg shadow-lg;
+  background: linear-gradient(135deg, rgba(21, 28, 37, 0.94), rgba(12, 17, 23, 0.94));
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.soc-card:hover {
+  border-color: rgba(68, 215, 192, 0.28);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 .soc-input {
   @apply bg-soc-950 border border-soc-700 text-soc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors placeholder:text-soc-500;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0;
+}
+
+button, a, input, select, textarea {
+  outline-offset: 3px;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--signal);
+}
+
+@keyframes bittrace-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bittrace-grid-drift {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 32px 32px, -32px -32px, 0 0; }
+}
+
+@keyframes bittrace-shell-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bittrace-shell-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bittrace-intro-out {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+.bittrace-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #02060b;
+}
+
+.bittrace-intro.is-exiting {
+  animation: bittrace-intro-out 700ms ease forwards;
+}
+
+.bittrace-intro video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bittrace-shell {
+  opacity: 0;
+}
+
+.bittrace-shell.is-revealing {
+  animation: bittrace-shell-reveal 700ms ease both;
+}
+
+@keyframes bittrace-sidebar-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+body {
+  animation: bittrace-grid-drift 24s linear infinite;
+}
+
+.bittrace-shell > header {
+  animation: bittrace-shell-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bittrace-workspace > aside {
+  animation: bittrace-sidebar-in 620ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bittrace-main > div {
+  animation: bittrace-rise 420ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 640px) {
+  .soc-card {
+    border-radius: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }

@@ -6,12 +6,31 @@ import io
 import csv
 import json
 import uuid
+import hashlib
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Response
+from typing import List, Dict, Any, Optional, Literal
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Response, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from starlette.middleware.base import BaseHTTPMiddleware
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+def escape_like(value: str) -> str:
+    """Escape LIKE wildcards so search input is treated as literal text."""
+    return value.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        return response
 
 from database import (
     init_db, get_db_connection, get_pipeline_state, update_pipeline_state
@@ -29,11 +48,12 @@ app = FastAPI(
 # Enable CORS for frontend development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -51,20 +71,20 @@ def on_startup():
 # Pydantic Request Models
 # -------------------------------------------------------------
 class CaseCreateRequest(BaseModel):
-    title: str
-    description: str
-    priority: str = "HIGH"
-    status: str = "OPEN"
-    target_entity: str
-    lead_id: Optional[str] = None
-    investigator_notes: Optional[str] = ""
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=5000)
+    priority: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"] = "HIGH"
+    status: Literal["OPEN", "UNDER_INVESTIGATION", "ESCALATED"] = "OPEN"
+    target_entity: str = Field(min_length=1, max_length=200)
+    lead_id: Optional[str] = Field(default=None, max_length=100)
+    investigator_notes: Optional[str] = Field(default="", max_length=10000)
 
 class CaseUpdateRequest(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    priority: Optional[str] = None
-    status: Optional[str] = None
-    investigator_notes: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    priority: Optional[Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]] = None
+    status: Optional[Literal["OPEN", "UNDER_INVESTIGATION", "ESCALATED", "CLOSED"]] = None
+    investigator_notes: Optional[str] = Field(default=None, max_length=10000)
 
 # -------------------------------------------------------------
 # 1. Pipeline & Ingestion Endpoints
@@ -90,7 +110,11 @@ async def upload_file(file: UploadFile = File(...)):
     """
     filename = file.filename.lower()
     content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Uploaded file exceeds the 10 MB limit.")
     raw_txs = []
+    dataset_id = str(uuid.uuid4())
+    source_format = filename.rsplit('.', 1)[-1].upper() if '.' in filename else 'UNKNOWN'
     
     if filename.endswith(".json"):
         try:
@@ -123,10 +147,63 @@ async def upload_file(file: UploadFile = File(...)):
         
     if not raw_txs:
         raise HTTPException(status_code=400, detail="Uploaded file contained no valid transaction records.")
+
+    created_at = datetime.utcnow().isoformat()
+    conn = get_db_connection()
+    conn.execute(
+        """
+        INSERT INTO datasets (
+            id, filename, source_format, file_sha256, row_count,
+            accepted_count, rejected_count, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            dataset_id,
+            file.filename or 'uploaded-dataset',
+            source_format,
+            hashlib.sha256(content).hexdigest(),
+            len(raw_txs),
+            len(raw_txs),
+            0,
+            "PROCESSING",
+            created_at,
+        ),
+    )
+    conn.executemany(
+        """
+        INSERT INTO source_records (
+            dataset_id, source_row_number, raw_payload, normalized_payload,
+            validation_status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                dataset_id,
+                row_number,
+                json.dumps(transaction),
+                json.dumps(transaction),
+                "ACCEPTED",
+                created_at,
+            )
+            for row_number, transaction in enumerate(raw_txs, start=1)
+        ],
+    )
+    conn.commit()
+    conn.close()
         
     # Execute pipeline
     result = run_forensic_pipeline(raw_txs)
+
+    conn = get_db_connection()
+    conn.execute(
+        "UPDATE datasets SET status = ? WHERE id = ?",
+        ("PROCESSED", dataset_id),
+    )
+    conn.commit()
+    conn.close()
+
     return {
+        "dataset_id": dataset_id,
         "status": "success",
         "validation_report": {
             "total_rows_parsed": len(raw_txs),
@@ -193,7 +270,7 @@ def list_transactions(
     limit: int = Query(25, ge=1, le=200),
     risk_level: Optional[str] = None,
     typology: Optional[str] = None,
-    search: Optional[str] = None,
+    search: Optional[str] = Query(default=None, max_length=200),
     min_amount: Optional[float] = None,
     max_amount: Optional[float] = None,
     sort_by: str = "timestamp",
@@ -222,8 +299,8 @@ def list_transactions(
         params.append(max_amount)
         
     if search:
-        search_term = f"%{search}%"
-        query += " AND (txid LIKE ? OR wallet_from LIKE ? OR wallet_to LIKE ? OR ip LIKE ?)"
+        search_term = f"%{escape_like(search.strip())}%"
+        query += " AND (txid LIKE ? ESCAPE '!' OR wallet_from LIKE ? ESCAPE '!' OR wallet_to LIKE ? ESCAPE '!' OR ip LIKE ? ESCAPE '!')"
         params.extend([search_term, search_term, search_term, search_term])
         
     # Count total
@@ -275,7 +352,7 @@ def list_transactions(
     }
 
 @app.get("/transactions/{txid}")
-def get_transaction(txid: str):
+def get_transaction(txid: str = Path(..., min_length=1, max_length=200)):
     conn = get_db_connection()
     c = conn.cursor()
     row = c.execute("SELECT * FROM transactions WHERE txid = ?", (txid,)).fetchone()
@@ -326,7 +403,7 @@ def list_wallets(
     page: int = Query(1, ge=1),
     limit: int = Query(25, ge=1, le=100),
     risk_level: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = Query(default=None, max_length=200)
 ):
     conn = get_db_connection()
     c = conn.cursor()
@@ -339,8 +416,8 @@ def list_wallets(
         params.append(risk_level)
         
     if search:
-        query += " AND address LIKE ?"
-        params.append(f"%{search}%")
+        query += " AND address LIKE ? ESCAPE '!'"
+        params.append(f"%{escape_like(search.strip())}%")
         
     total = c.execute(query.replace("SELECT *", "SELECT COUNT(*)"), params).fetchone()[0]
     
@@ -360,7 +437,7 @@ def list_wallets(
     }
 
 @app.get("/wallets/{address}")
-def get_wallet(address: str):
+def get_wallet(address: str = Path(..., min_length=1, max_length=200)):
     conn = get_db_connection()
     c = conn.cursor()
     
@@ -396,7 +473,7 @@ def get_wallet(address: str):
 def get_graph_data(
     min_risk: float = Query(0.0, ge=0.0, le=100.0),
     max_nodes: int = Query(150, ge=10, le=500),
-    typology: Optional[str] = None
+    typology: Optional[str] = Query(default=None, max_length=100),
 ):
     """
     Returns graph representation of wallets, transactions, and IPs for interactive link analysis.
@@ -565,7 +642,7 @@ def create_case(req: CaseCreateRequest):
     return dict(case_row)
 
 @app.get("/cases/{case_id}")
-def get_case(case_id: str):
+def get_case(case_id: str = Path(..., min_length=1, max_length=100)):
     conn = get_db_connection()
     c = conn.cursor()
     row = c.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
@@ -575,7 +652,7 @@ def get_case(case_id: str):
     return dict(row)
 
 @app.patch("/cases/{case_id}")
-def update_case(case_id: str, req: CaseUpdateRequest):
+def update_case(req: CaseUpdateRequest, case_id: str = Path(..., min_length=1, max_length=100)):
     conn = get_db_connection()
     c = conn.cursor()
     
@@ -615,7 +692,7 @@ def update_case(case_id: str, req: CaseUpdateRequest):
     return dict(updated_row)
 
 @app.delete("/cases/{case_id}")
-def delete_case(case_id: str):
+def delete_case(case_id: str = Path(..., min_length=1, max_length=100)):
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("DELETE FROM cases WHERE id = ?", (case_id,))
@@ -627,7 +704,10 @@ def delete_case(case_id: str):
 # 8. Report Export Endpoints (PDF & CSV)
 # -------------------------------------------------------------
 @app.get("/reports/{case_id}")
-def export_case_report(case_id: str, format: str = "pdf"):
+def export_case_report(
+    case_id: str = Path(..., min_length=1, max_length=100),
+    format: Literal["pdf", "csv"] = "pdf",
+):
     """
     Generates and returns official ReportLab PDF case dossier or CSV transaction export.
     """
@@ -702,18 +782,18 @@ def export_all_transactions_csv():
 # 9. Global Command Palette Search (Cmd+K)
 # -------------------------------------------------------------
 @app.get("/search")
-def global_search(q: str = Query(..., min_length=1)):
+def global_search(q: str = Query(..., min_length=1, max_length=200)):
     """
     Search across Transactions (TXID), Wallets, IPs, and Cases.
     """
     conn = get_db_connection()
     c = conn.cursor()
-    term = f"%{q.strip()}%"
+    term = f"%{escape_like(q.strip())}%"
     
-    txs = c.execute("SELECT txid, amount, risk_score, risk_level, timestamp FROM transactions WHERE txid LIKE ? LIMIT 5", (term,)).fetchall()
-    wallets = c.execute("SELECT address, total_sent, total_received, risk_score, risk_level FROM wallets WHERE address LIKE ? LIMIT 5", (term,)).fetchall()
-    ips = c.execute("SELECT DISTINCT ip, wallet, correlation_confidence FROM wallet_ips WHERE ip LIKE ? LIMIT 5", (term,)).fetchall()
-    cases = c.execute("SELECT id, title, priority, status, target_entity FROM cases WHERE id LIKE ? OR title LIKE ? OR target_entity LIKE ? LIMIT 5", (term, term, term)).fetchall()
+    txs = c.execute("SELECT txid, amount, risk_score, risk_level, timestamp FROM transactions WHERE txid LIKE ? ESCAPE '!' LIMIT 5", (term,)).fetchall()
+    wallets = c.execute("SELECT address, total_sent, total_received, risk_score, risk_level FROM wallets WHERE address LIKE ? ESCAPE '!' LIMIT 5", (term,)).fetchall()
+    ips = c.execute("SELECT DISTINCT ip, wallet, correlation_confidence FROM wallet_ips WHERE ip LIKE ? ESCAPE '!' LIMIT 5", (term,)).fetchall()
+    cases = c.execute("SELECT id, title, priority, status, target_entity FROM cases WHERE id LIKE ? ESCAPE '!' OR title LIKE ? ESCAPE '!' OR target_entity LIKE ? ESCAPE '!' LIMIT 5", (term, term, term)).fetchall()
     
     conn.close()
     
