@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Menu, Search, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { NavigationPage } from '../../types';
 
 const NetworkFingerprintMark: React.FC = () => (
@@ -93,12 +93,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Center */}
         <div className="hidden sm:flex items-center gap-3 md:ml-6">
-          <div className="hidden lg:flex items-center gap-2 border-r border-slate-700/80 pr-4 text-[10px] font-mono uppercase tracking-wider text-soc-400">
-            <Database className="h-3.5 w-3.5 text-cyan-400" />
-            <span>Demo dataset</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span className="text-emerald-400">Local</span>
-          </div>
           {/* Search Pill */}
           <button
             onClick={onOpenSearch}
