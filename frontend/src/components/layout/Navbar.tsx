@@ -52,14 +52,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         className="cursor-pointer flex items-center flex-shrink-0 group py-1"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-200 bg-[#F1F5F9]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-[#F1F5F9]">
             <NetworkFingerprintMark />
           </span>
           <div>
             <span className="block font-bold text-[#0F172A] text-xl leading-none tracking-tight font-sans group-hover:text-[#0E7490] transition-colors">
               BitTrace
             </span>
-            <span className="hidden sm:block mt-1 text-[9px] font-mono uppercase tracking-[0.18em] text-[#94A3B8]">
+            <span className="hidden sm:block mt-1 text-xs font-mono uppercase tracking-[0.18em] text-[#94A3B8]">
               Chain forensics toolkit
             </span>
           </div>
@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={cat.id}
                 onClick={() => onSelectPage(cat.id)}
                 className={`relative overflow-hidden h-6 group font-sans text-xs uppercase tracking-wider font-semibold transition-colors ${
-                  isActive ? 'text-cyan-400' : 'text-soc-300 hover:text-white'
+                    isActive ? 'text-cyan-400' : 'text-soc-300 hover:text-soc-400'
                 }`}
               >
                 <span className="block group-hover:-translate-y-full transition-transform duration-300">
@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Search Pill */}
           <button
             onClick={onOpenSearch}
-            className="border border-slate-600 hover:bg-slate-800 px-3.5 py-1.5 rounded-full text-xs font-medium transition flex items-center space-x-1.5 text-soc-200 hover:text-white"
+            className="ui-action-button ui-action-button-outline rounded-full"
           >
             <Search className="w-3.5 h-3.5 text-soc-400" />
             <span>Search</span>
@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Hamburger Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden text-soc-300 hover:text-white p-1"
+          className="md:hidden text-soc-300 hover:text-soc-400 p-1"
           aria-label="Toggle navigation menu"
         >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -117,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="absolute top-16 left-0 bg-soc-950 border border-slate-700/80 rounded-2xl w-full flex flex-col items-center gap-4 py-6 shadow-2xl z-50 text-sm font-sans md:hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-16 left-0 bg-soc-950 border border-slate-700/80 rounded-lg w-full flex flex-col items-center gap-4 py-6 shadow-2xl z-50 text-sm font-sans md:hidden animate-in fade-in zoom-in-95 duration-150">
             {navCategories.map((cat) => (
               <button
                 key={cat.id}
@@ -128,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className={`w-full text-center py-1 font-semibold ${
                   typeof currentPage === 'string' && cat.activeFor.includes(currentPage as NavigationPage)
                     ? 'text-cyan-400'
-                    : 'text-soc-300 hover:text-white'
+                    : 'text-soc-300 hover:text-soc-400'
                 }`}
               >
                 {cat.label}
@@ -141,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onOpenSearch();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full border border-slate-600 hover:bg-slate-800 px-4 py-2 rounded-full text-xs font-medium transition text-soc-200 flex items-center justify-center space-x-2"
+                className="ui-action-button ui-action-button-outline w-full rounded-full"
               >
                 <Search className="w-3.5 h-3.5 text-soc-400" />
                 <span>Search (Ctrl+K)</span>

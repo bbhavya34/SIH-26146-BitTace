@@ -100,7 +100,7 @@ export const SubSidebar: React.FC<SubSidebarProps> = ({
         )}
         <button
           onClick={onToggleCollapse}
-          className="p-1 rounded-md hover:bg-soc-800 text-soc-400 hover:text-white transition-colors mx-auto"
+          className="p-1 rounded-md hover:bg-soc-800 text-soc-400 hover:text-soc-400 transition-colors mx-auto"
           title={collapsed ? 'Expand Sub-Sidebar' : 'Collapse Sub-Sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -126,7 +126,7 @@ export const SubSidebar: React.FC<SubSidebarProps> = ({
                   className={`w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium transition-all group relative ${
                     isActive
                       ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-700/50 shadow-sm'
-                      : 'text-soc-300 hover:text-white hover:bg-soc-900/60'
+                      : 'text-soc-300 hover:text-soc-400 hover:bg-soc-800/70'
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
