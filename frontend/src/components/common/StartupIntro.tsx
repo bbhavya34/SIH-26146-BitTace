@@ -15,6 +15,11 @@ export const StartupIntro: React.FC<StartupIntroProps> = ({ onReveal, onComplete
     if (!video) return;
 
     video.play().catch(handleComplete);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') handleComplete();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
   }, []);
 
   const handleComplete = () => {
@@ -26,7 +31,7 @@ export const StartupIntro: React.FC<StartupIntroProps> = ({ onReveal, onComplete
   };
 
   return (
-    <div className={`bittrace-intro${isExiting ? ' is-exiting' : ''}`} role="presentation">
+    <div className={`bittrace-intro${isExiting ? ' is-exiting' : ''}`}>
       <video
         ref={videoRef}
         autoPlay
@@ -36,6 +41,11 @@ export const StartupIntro: React.FC<StartupIntroProps> = ({ onReveal, onComplete
         onError={handleComplete}
         src="/bittrace-startup.mp4"
       />
+      {!isExiting && (
+        <button type="button" className="bittrace-intro-skip" onClick={handleComplete}>
+          Skip animation
+        </button>
+      )}
     </div>
   );
 };
