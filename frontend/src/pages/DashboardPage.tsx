@@ -90,9 +90,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       }))
     : [];
 
+  const formatRuleLabel = (rule: string) =>
+    rule
+      .toLowerCase()
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-
+      <h1 className="text-xl font-bold text-white tracking-wide">BitTrace Investigation Overview</h1>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -105,7 +112,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="text-2xl font-bold text-white font-mono">
             {stats?.total_transactions.toLocaleString() ?? '—'}
           </div>
-          <div className="text-[11px] text-soc-400 font-mono flex items-center justify-between">
+          <div className="text-xs text-soc-400 font-mono flex items-center justify-between">
             <span>Total Volume:</span>
             <span className="text-cyan-300 font-semibold">{stats?.total_volume_btc.toFixed(2) ?? 0} BTC</span>
           </div>
@@ -120,7 +127,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="text-2xl font-bold text-red-400 font-mono">
             {stats?.critical_alerts.toLocaleString() ?? '—'}
           </div>
-          <div className="text-[11px] text-soc-400 font-mono flex items-center justify-between">
+          <div className="text-xs text-soc-400 font-mono flex items-center justify-between">
             <span>Flagged Wallets:</span>
             <span className="text-orange-400 font-semibold">{stats?.flagged_wallets ?? 0}</span>
           </div>
@@ -135,7 +142,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="text-2xl font-bold text-amber-400 font-mono">
             {stats?.active_leads.toLocaleString() ?? '—'}
           </div>
-          <div className="text-[11px] text-soc-400 font-mono flex items-center justify-between">
+          <div className="text-xs text-soc-400 font-mono flex items-center justify-between">
             <span>Typologies Flagged:</span>
             <span className="text-amber-300 font-semibold">{Object.keys(stats?.typology_distribution || {}).length}</span>
           </div>
@@ -150,11 +157,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="text-2xl font-bold text-violet-300 font-mono">
             {stats?.active_cases.toLocaleString() ?? '—'}
           </div>
-          <div className="text-[11px] text-soc-400 font-mono flex items-center justify-between">
+          <div className="text-xs text-soc-400 font-mono flex items-center justify-between">
             <span>Case Management:</span>
             <button
               onClick={() => onNavigatePage('cases')}
-              className="text-cyan-400 hover:underline flex items-center space-x-0.5"
+              className="ui-action-button ui-action-button-quiet"
             >
               <span>View Cases</span>
               <ArrowUpRight className="w-3 h-3" />
@@ -170,7 +177,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white tracking-wide">Temporal Volume & Threat Progression</h3>
-              <p className="text-[11px] text-soc-400 font-mono">Hourly aggregated transaction volume (BTC) vs Risk score</p>
+              <p className="text-xs text-soc-400 font-mono">Hourly aggregated transaction volume (BTC) vs risk score</p>
             </div>
             <div className="flex items-center space-x-3 text-[11px] font-mono">
               <span className="flex items-center space-x-1 text-cyan-400">
@@ -210,7 +217,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="soc-card p-5 space-y-4">
           <div>
             <h3 className="text-sm font-bold text-white tracking-wide">Risk Level Distribution</h3>
-            <p className="text-[11px] text-soc-400 font-mono">Multi-factor weighted risk classification</p>
+              <p className="text-xs text-soc-400 font-mono">Multi-factor weighted risk classification</p>
           </div>
 
           <div className="h-44 w-full flex items-center justify-center">
@@ -240,7 +247,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
             {riskPieData.map((item) => (
               <div key={item.name} className="flex items-center justify-between p-1.5 rounded bg-soc-950 border border-soc-800/60">
                 <span className="flex items-center space-x-1.5 text-soc-300">
@@ -265,7 +272,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <button
               onClick={() => onNavigatePage('leads')}
-              className="text-xs text-cyan-400 hover:underline flex items-center space-x-1 font-mono"
+              className="ui-action-button ui-action-button-quiet font-mono"
             >
               <span>View All Leads</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -277,12 +284,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <div
                 key={lead.id}
                 onClick={() => onOpenEntity('LEAD', lead)}
-                className="p-3 rounded-lg bg-soc-950 hover:bg-soc-800/80 border border-soc-800 hover:border-amber-500/40 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors group"
+                className="p-3 rounded-md bg-soc-950 hover:bg-soc-800/80 border border-soc-800 hover:border-amber-500/40 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors group"
               >
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold">
-                      {lead.rule_triggered}
+                    <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-amber-950 text-amber-400 border border-amber-800 font-bold">
+                      {formatRuleLabel(lead.rule_triggered)}
                     </span>
                     <span className="text-[10px] font-mono text-soc-400">
                       Confidence: {lead.confidence}%
