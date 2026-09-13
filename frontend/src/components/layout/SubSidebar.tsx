@@ -145,7 +145,7 @@ export const SubSidebar: React.FC<SubSidebarProps> = ({
                   )}
 
                   {collapsed && (
-                    <div className="absolute left-full ml-2 px-2.5 py-1 bg-soc-900 text-soc-100 text-xs rounded border border-soc-700 shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap font-mono">
+                    <div className="absolute left-full ml-2 px-2.5 py-1 bg-[#3b2928] text-white text-xs rounded border border-[#c77abf] shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60] whitespace-nowrap font-mono">
                       {item.label}
                     </div>
                   )}

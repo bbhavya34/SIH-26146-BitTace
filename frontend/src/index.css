@@ -6,16 +6,16 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
-    --canvas: #080b10;
-    --surface: #10151c;
-    --surface-raised: #151c25;
-    --line: #26313c;
-    --muted: #8795a5;
-    --ink: #edf3f7;
-    --signal: #44d7c0;
-    --signal-soft: rgba(68, 215, 192, 0.12);
-    --warning: #f2b84b;
+    color-scheme: light;
+    --canvas: #FDFDFB;
+    --surface: #ffffff;
+    --surface-raised: #F4FBF3;
+    --line: #CBE8CF;
+    --muted: #6EAA79;
+    --ink: #6B403C;
+    --signal: #FF857A;
+    --signal-soft: rgba(255, 133, 122, 0.16);
+    --warning: #EBAEE6;
   }
   
   html {
@@ -29,9 +29,9 @@
   body {
     @apply text-soc-200 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200;
     background-color: var(--canvas);
-    background-image: linear-gradient(rgba(68, 215, 192, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(68, 215, 192, 0.025) 1px, transparent 1px),
-      radial-gradient(circle at 80% -10%, rgba(68, 215, 192, 0.09), transparent 34rem);
+    background-image: linear-gradient(rgba(107, 64, 60, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(107, 64, 60, 0.035) 1px, transparent 1px),
+      radial-gradient(circle at 80% -10%, rgba(173, 235, 179, 0.24), transparent 34rem);
     background-size: 32px 32px, 32px 32px, auto;
     overflow-x: hidden;
   }
@@ -51,16 +51,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: #F4FBF3;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #ADEBB3;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #91C99A;
 }
 
 /* Threat Badges & Accents */
@@ -87,18 +87,29 @@
 /* Surface Cards */
 .soc-card {
   @apply bg-soc-900 border border-soc-800/80 rounded-lg shadow-lg;
-  background: linear-gradient(135deg, rgba(21, 28, 37, 0.94), rgba(12, 17, 23, 0.94));
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(244, 251, 243, 0.98));
+  box-shadow: 0 18px 45px rgba(107, 64, 60, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .soc-card:hover {
-  border-color: rgba(68, 215, 192, 0.28);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 133, 122, 0.48);
+  box-shadow: 0 20px 48px rgba(107, 64, 60, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .soc-input {
   @apply bg-soc-950 border border-soc-700 text-soc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors placeholder:text-soc-500;
+}
+
+.bittrace-shell .text-white {
+  color: #6B403C;
+}
+
+.bittrace-shell .bg-cyan-500,
+.bittrace-shell .bg-cyan-600,
+.bittrace-shell .hover\:bg-cyan-500:hover,
+.bittrace-shell .hover\:bg-cyan-600:hover {
+  color: #ffffff;
 }
 
 h1, h2, h3, h4 {

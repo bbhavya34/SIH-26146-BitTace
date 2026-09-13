@@ -1,6 +1,27 @@
 import React, { useState } from 'react';
-import { Database, Menu, Search, ShieldCheck, X } from 'lucide-react';
+import { Database, Menu, Search, X } from 'lucide-react';
 import { NavigationPage } from '../../types';
+
+const NetworkFingerprintMark: React.FC = () => (
+  <svg viewBox="0 0 32 32" aria-hidden="true" className="h-5 w-5">
+    <g fill="none" stroke="#0E7490" strokeWidth="1.15" strokeLinecap="round">
+      <path d="M7 13.5 11 8l5-2 5 2 4 5.5" />
+      <path d="m7 13.5 1 7 4 5 4-2 4 2 4-5 1-7" />
+      <path d="m11 8 1 6 4 3 4-3 1-6" />
+      <path d="m8 20.5 4-2.5 4 2 4-2 4 2.5" />
+      <path d="m12 14 1 7.5M20 14l-1 7.5M16 17v6.5" />
+    </g>
+    <g fill="#0F172A">
+      <circle cx="7" cy="13.5" r="1.5" /><circle cx="11" cy="8" r="1.5" />
+      <circle cx="16" cy="6" r="1.5" /><circle cx="21" cy="8" r="1.5" />
+      <circle cx="25" cy="13.5" r="1.5" /><circle cx="8" cy="20.5" r="1.5" />
+      <circle cx="12" cy="18" r="1.5" /><circle cx="16" cy="20" r="1.5" />
+      <circle cx="20" cy="18" r="1.5" /><circle cx="24" cy="20.5" r="1.5" />
+      <circle cx="12" cy="26" r="1.5" /><circle cx="16" cy="23.5" r="1.5" />
+      <circle cx="20" cy="26" r="1.5" />
+    </g>
+  </svg>
+);
 
 interface NavbarProps {
   currentPage: NavigationPage | 'not_found';
@@ -30,16 +51,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         onClick={() => onSelectPage('dashboard')}
         className="cursor-pointer flex items-center flex-shrink-0 group py-1"
       >
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cyan-400/30 bg-cyan-400/10 text-cyan-300">
-            <ShieldCheck className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-200 bg-[#F1F5F9]">
+            <NetworkFingerprintMark />
           </span>
           <div>
-            <span className="block font-bold text-white text-lg tracking-tight font-sans group-hover:text-cyan-300 transition-colors">
+            <span className="block font-bold text-[#0F172A] text-xl leading-none tracking-tight font-sans group-hover:text-[#0E7490] transition-colors">
               BitTrace
             </span>
-            <span className="hidden sm:block text-[9px] font-mono uppercase tracking-[0.18em] text-soc-500">
-              Evidence workbench
+            <span className="hidden sm:block mt-1 text-[9px] font-mono uppercase tracking-[0.18em] text-[#94A3B8]">
+              Chain forensics toolkit
             </span>
           </div>
         </div>

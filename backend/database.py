@@ -1,27 +1,31 @@
-"""PostgreSQL database layer for BitTrace forensic data."""
+"""SQLite locally, PostgreSQL when DATABASE_URL is configured."""
+import sqlite3
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import psycopg
 from psycopg.rows import dict_row
 
+DB_PATH = os.path.join(os.path.dirname(__file__), "bittrace.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
+USING_POSTGRES = bool(DATABASE_URL)
 
 
 class DatabaseCursor:
     def __init__(self, cursor):
         self._cursor = cursor
 
-    @staticmethod
-    def _adapt_query(query: str) -> str:
-        return query.replace("?", "%s")
-
     def execute(self, query, params=None):
-        self._cursor.execute(self._adapt_query(query), params or ())
+        query = query.replace("AUTO_ID", "SERIAL PRIMARY KEY" if USING_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT")
+        if USING_POSTGRES:
+            query = query.replace("?", "%s")
+        self._cursor.execute(query, params or ())
         return self
 
     def executemany(self, query, params):
-        self._cursor.executemany(self._adapt_query(query), params)
+        if USING_POSTGRES:
+            query = query.replace("?", "%s")
+        self._cursor.executemany(query, params)
         return self
 
     def fetchone(self):
@@ -44,17 +48,16 @@ class DatabaseConnection:
     def commit(self):
         self._connection.commit()
 
-    def rollback(self):
-        self._connection.rollback()
-
     def close(self):
         self._connection.close()
 
 
 def get_db_connection():
-    if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL must be set to a PostgreSQL connection string")
-    return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+    if USING_POSTGRES:
+        return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return DatabaseConnection(conn)
 
 def init_db():
     conn = get_db_connection()
@@ -98,7 +101,7 @@ def init_db():
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS wallet_ips (
-        id SERIAL PRIMARY KEY,
+        id AUTO_ID,
         wallet TEXT NOT NULL,
         ip TEXT NOT NULL,
         tx_count INTEGER DEFAULT 1,
@@ -181,7 +184,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS source_records (
-        id SERIAL PRIMARY KEY,
+        id AUTO_ID,
         dataset_id TEXT NOT NULL,
         source_row_number INTEGER NOT NULL,
         raw_payload TEXT NOT NULL,
@@ -196,7 +199,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS risk_scores (
-        id SERIAL PRIMARY KEY,
+        id AUTO_ID,
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         score REAL NOT NULL,
@@ -213,7 +216,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rule_hits (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         rule_code TEXT NOT NULL,
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
@@ -228,7 +231,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS audit_events (
-        id SERIAL PRIMARY KEY,
+        id AUTO_ID,
         actor_id TEXT,
         action TEXT NOT NULL,
         entity_type TEXT,

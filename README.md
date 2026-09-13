@@ -1,7 +1,7 @@
 # BitTrace — Bitcoin Forensic Intelligence Platform
 
 > **SIH 2026 | Problem Statement PS-26146 | NTRO Cyber Division**
-> AI-powered offline Bitcoin transaction monitoring, graph link analysis, and forensic investigation system.
+> AI-powered Bitcoin transaction monitoring, graph link analysis, and forensic investigation system.
 
 ---
 
@@ -24,14 +24,14 @@
 
 ## Project Overview
 
-BitTrace is a **fully offline** forensic intelligence platform designed for analysing Bitcoin transaction networks to detect money-laundering typologies, identify high-risk wallet clusters, and generate structured investigation dockets for NTRO analysts.
+BitTrace is a forensic intelligence platform designed for analysing Bitcoin transaction networks to detect money-laundering typologies, identify high-risk wallet clusters, and generate structured investigation dockets for NTRO analysts. Local development uses SQLite; deployed environments use PostgreSQL when `DATABASE_URL` is configured.
 
 | Layer | Technology |
 |---|---|
 | Backend API | FastAPI + Python 3.10+ |
 | ML Engine | scikit-learn (Isolation Forest, DBSCAN) |
 | Graph Analytics | NetworkX (directed graph, centrality) |
-| Storage | PostgreSQL — persistent relational storage |
+| Storage | SQLite locally / PostgreSQL in deployment |
 | Report Generation | ReportLab (PDF dossiers) |
 | Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
 | Data Visualisation | Recharts |
@@ -417,18 +417,17 @@ sequenceDiagram
 ```bash
 cd backend
 pip install -r requirements.txt
-$env:DATABASE_URL="postgresql://user:password@localhost:5432/bittrace"
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The backend requires `DATABASE_URL`, a PostgreSQL connection string. On Render, set
-`DATABASE_URL` to the internal URL from the attached PostgreSQL database and set
+The backend uses local SQLite automatically when `DATABASE_URL` is not set. For
+deployment, set `DATABASE_URL` to the internal PostgreSQL URL and
 `ALLOWED_ORIGINS` to the deployed frontend URL.
 
 API docs available at: `http://127.0.0.1:8000/docs`
 
 Health monitoring is available at `http://127.0.0.1:8000/health` and the API
-root at `http://127.0.0.1:8000/`. The response reports API status, PostgreSQL
+root at `http://127.0.0.1:8000/`. The response reports API status, database
 reachability, and whether the request's `Origin` is allowed by CORS.
 
 ### Frontend
@@ -444,8 +443,13 @@ App available at: `http://localhost:5173`
 ### Production deployment
 
 The repository includes `render.yaml` for deploying the FastAPI service and a
-managed PostgreSQL database on Render. Set `ALLOWED_ORIGINS` to the final
+managed PostgreSQL database on Render. Render supplies `DATABASE_URL` through
+the database connection, and `ALLOWED_ORIGINS` should be set to the final
 frontend origin in the Render dashboard.
+
+The light frontend uses the Lotus Garden palette: cream surfaces, mint status
+accents, coral actions, orchid secondary states, and deep maroon typography.
+The BitTrace header and favicon share the same dot-and-line fingerprint mark.
 
 Deploy the `frontend` directory to Vercel with:
 
@@ -484,4 +488,4 @@ Upload CSV or JSON files with the following fields (aliases are auto-mapped):
 
 ---
 
-> Built for **NTRO PS-26146** | SIH 2026 | Analysis runs on persistent PostgreSQL storage.
+> Built for **NTRO PS-26146** | SIH 2026 | SQLite locally, PostgreSQL in deployment.
