@@ -91,7 +91,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     : [];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
 
 
       {/* KPI Cards Grid */}

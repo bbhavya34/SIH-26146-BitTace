@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-3 z-40 px-4 sm:px-6 py-1 max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
+    <header className="sticky top-2 sm:top-3 z-40 px-3 sm:px-6 py-1 max-w-7xl mx-auto w-full flex items-center justify-between gap-2 sm:gap-4">
       {/* Brand Name Outside Navbar */}
       <div
         onClick={() => onSelectPage('dashboard')}
@@ -46,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Floating Pill Navbar */}
-      <nav className="flex items-center border border-slate-700/80 bg-soc-950/90 backdrop-blur-md px-5 sm:px-6 py-2 rounded-full text-white text-sm shadow-xl relative">
+      <nav className="flex items-center border border-slate-700/80 bg-soc-950/90 backdrop-blur-md px-3 sm:px-6 py-2 rounded-full text-white text-sm shadow-xl relative min-w-0">
         {/* Shortened Dynamic Rolling Text Links */}
         <div className="hidden md:flex items-center gap-7">
           {navCategories.map((cat) => {

@@ -146,7 +146,7 @@ export function App() {
       />
 
       {/* Main Workspace Layout with Clean Sub-topic Sidebar */}
-      <div className="bittrace-workspace flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-16 flex gap-6">
+      <div className="bittrace-workspace flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-4 pb-10 sm:pb-16 flex flex-col md:flex-row gap-3 sm:gap-6">
         {/* Sleek Sub-Sidebar for sub-related topics */}
         <SubSidebar
           currentPage={currentPage}

@@ -87,8 +87,8 @@ export const SubSidebar: React.FC<SubSidebarProps> = ({
 
   return (
     <aside
-      className={`bg-soc-950/70 border border-slate-800/80 rounded-2xl p-3 shadow-lg flex flex-col transition-all duration-300 backdrop-blur-sm self-start sticky top-24 ${
-        collapsed ? 'w-16' : 'w-60'
+      className={`bg-soc-950/70 border border-slate-800/80 rounded-2xl p-3 shadow-lg flex flex-col transition-all duration-300 backdrop-blur-sm self-stretch md:self-start md:sticky md:top-24 ${
+        collapsed ? 'w-full md:w-16' : 'w-full md:w-60'
       }`}
     >
       {/* Header with Collapse toggle */}
