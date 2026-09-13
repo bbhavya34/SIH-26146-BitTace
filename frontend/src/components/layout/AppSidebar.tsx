@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  UploadCloud,
   ArrowLeftRight,
   Wallet,
   Share2,
@@ -44,7 +43,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard' as NavigationPage, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'ingestion' as NavigationPage, label: 'Data Ingestion', icon: UploadCloud },
     { id: 'transactions' as NavigationPage, label: 'Transactions', icon: ArrowLeftRight },
     { id: 'wallets' as NavigationPage, label: 'Wallets', icon: Wallet },
     { id: 'graph' as NavigationPage, label: 'Network Graph', icon: Share2 },

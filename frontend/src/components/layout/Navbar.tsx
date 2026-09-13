@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Shortened core pillar categories
   const navCategories: { id: NavigationPage; label: string; activeFor: NavigationPage[] }[] = [
-    { id: 'dashboard', label: 'Overview', activeFor: ['dashboard', 'ingestion'] },
+    { id: 'dashboard', label: 'Overview', activeFor: ['dashboard'] },
     { id: 'transactions', label: 'Forensics', activeFor: ['transactions', 'wallets', 'graph'] },
     { id: 'leads', label: 'Investigations', activeFor: ['leads', 'cases'] },
     { id: 'reports', label: 'Reports', activeFor: ['reports'] },

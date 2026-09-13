@@ -4,7 +4,6 @@ import {
   ArrowLeftRight,
   Wallet,
   Share2,
-  UploadCloud,
   AlertTriangle,
   Briefcase,
   FileText,
@@ -40,7 +39,6 @@ export const SubSidebar: React.FC<SubSidebarProps> = ({
       group: 'Overview',
       items: [
         { id: 'dashboard' as NavigationPage, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'ingestion' as NavigationPage, label: 'Data Ingestion', icon: UploadCloud },
       ],
     },
     {
