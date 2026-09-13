@@ -10,7 +10,7 @@ import hashlib
 import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Literal
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Response, Path
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Response, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
@@ -64,6 +64,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+def get_health_status(request: Request):
+    database_status = "ok"
+    try:
+        conn = get_db_connection()
+        conn.cursor().execute("SELECT 1")
+        conn.close()
+    except Exception:
+        database_status = "unavailable"
+
+    request_origin = request.headers.get("origin")
+    return {
+        "status": "ok" if database_status == "ok" else "degraded",
+        "service": "bittrace-api",
+        "version": app.version,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "database": database_status,
+        "cors": {
+            "request_origin": request_origin,
+            "origin_allowed": request_origin in allowed_origins if request_origin else None,
+        },
+    }
+
+
+@app.get("/", tags=["health"])
+@app.get("/health", tags=["health"])
+def health_check(request: Request):
+    return get_health_status(request)
 
 # Initialize database on startup
 @app.on_event("startup")

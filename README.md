@@ -427,6 +427,10 @@ The backend requires `DATABASE_URL`, a PostgreSQL connection string. On Render, 
 
 API docs available at: `http://127.0.0.1:8000/docs`
 
+Health monitoring is available at `http://127.0.0.1:8000/health` and the API
+root at `http://127.0.0.1:8000/`. The response reports API status, PostgreSQL
+reachability, and whether the request's `Origin` is allowed by CORS.
+
 ### Frontend
 
 ```bash
